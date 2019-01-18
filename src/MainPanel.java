@@ -16,8 +16,11 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
     //ゲーム用スレッド
     private Thread gameLoop;
 
-    //ポインターイメージ
+    //イメージの保存
     private Image[] images;
+
+    //ゲームが終わったかどうかの変数
+    private boolean isFinish;
 
     //ポインターの押した座標
     private int xPressed;
@@ -46,12 +49,30 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
     //パルさん
     private Paru paru;
 
+    //scorepanel
+    ScorePanel scorePanel;
+
+    //不透明度
+    private float F;
+
+    //Threadのsleep
+    private int sleepTime;
+
+    //スタートできるかどうか？
+    private boolean canStart;
 
     public MainPanel() {
+        scorePanel = new ScorePanel();
         // パネルの推奨サイズを設定、pack()するときに必要
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
         loadImage(filenames);
+
+        //初期値設定
+        this.isFinish = false;
+        this.canStart = false;
+        this.F = 0.0f;
+        this.sleepTime = 10;
 
         //的の移動までの時間初期値
         times1 = 200;
@@ -94,10 +115,12 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
     @Override
     //マウスが押されたとき
     public void mousePressed(MouseEvent e) {
+        canStart = true;
         xPressed = e.getX(); // マウスのX座標
         yPressed = e.getY(); // ラケットを移動
         paru.setCount(0);
         paru.setDir(paru.ATTACK);
+        paru.stop();
         repaint();
     }
 
@@ -130,19 +153,55 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
 
     }
 
+    /*
+    終了した場合の処理
+     */
+    public void finish(){
+        scorePanel.Visible();
+    }
+
     public void run() {
         while (true) {
+            if (canStart) {
+                no += 1;
+                if (num < 2) { //何回的を壊せば終了するか
+                    if (times1 + 300 - num * 10 == no) { //的1つ目
+                        times1 = no;
+                        num++;
+                        mato = new Mato();
+                    } else if (mato.close(xPressed, yPressed)) {
+                        mato = new Mato();
+                        times1 = no;
+                        num++;
+                    }
+                    if (num > 5) { //的2つ目は5個以上壊したら出現
+                        if (times2 + 300 - num * 10 == no) {
+                            times2 = no;
+                            mato2 = new Mato();
+                            num++;
+                        } else if (mato2.close(xPressed, yPressed)) {
+                            mato2 = new Mato();
+                            times2 = no;
+                            num++;
+                        }
+                    }
+                    //finishTime ="GAME FINISH!! YOUR TIME IS " + no;
+                } else {
+                    isFinish = true;
+                    sleepTime = 200;//フェードアウト時のみ描画を遅くするため
+                    if (F < 0.6f) {
+                        F += 0.05;
+                    }else {
+                        finish();
+                    }
+                }
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (Exception e) {
 
-            no += 1;
-
-            repaint();
-
-            //休止
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                }
             }
+            repaint();
         }
     }
 
@@ -150,69 +209,36 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
      * gameLoop.start　→　run, repaint()　→　paintComponent　とくっついているので，ここで書けば，runの休止期間毎に呼び出される
      * @param g
      */
-
     public void paintComponent(Graphics g) {
-
         super.paintComponent(g); //いる？？
+        g.drawImage(images[3],0,0,null); //背景
+        paru.drow(g);//パルさん描画
 
-        //マス目
-        for (int i = 0; i*100 < WIDTH;i++){
-            g.drawLine(i*100,0,i*100,WIDTH);
-        }
-
-        for (int j = 0; j*100 < WIDTH;j++){
-            g.drawLine(0,j*100,WIDTH,j*100);
-        }
-
-        //背景
-        g.drawImage(images[3],0,0,null);
-
-        //パルさん描画
-        paru.drow(g);
-
-        //まとを何回叩いたらゲームが終わるか
-        if (num < 10) { //今はいいが，後々runメソッドに書く
-
+        if (canStart) {
             //時間
-            String Time = "time" + no;
-            g.drawString(Time,400,50);
+            //String Time = "time" + no;
+            //g.drawString(Time,400,50);
 
-            //的1
-            if (times1 + 350 == no) {
-                times1 = no;
-                num++;
-                mato = new Mato();
-            } else if (mato.close(xPressed, yPressed)) {
-                mato = new Mato();
-                times1 = no;
-                num++;
-            }
-
-            //的2
-            if (num > 5) {
-                if (times2 + 350 == no) {
-                    times2 = no;
-                    mato2 = new Mato();
-                    num++;
-
-                } else if (mato2.close(xPressed, yPressed)) {
-                    mato2 = new Mato();
-                    times2 = no;
-                    num++;
+            if (!isFinish) {
+                mato.drow(g);
+                if (num > 5) {
+                    mato2.drow(g);
                 }
+            } else {
+                Graphics2D g2 = (Graphics2D) g;
+
+                // アルファ値
+                AlphaComposite composite = AlphaComposite.getInstance(
+                        AlphaComposite.SRC_OVER, F);
+
+                // アルファ値をセット（以後の描画は半透明になる）
+                g2.setComposite(composite);
+                g.setColor(Color.gray);
+                g.fillRect(0, 0, WIDTH, HEIGHT);
+
             }
-
-            mato.drow(g);
-            if (num > 5) {
-                mato2.drow(g);
-            }
-
-            finishTime ="GAME FINISH!! YOUR TIME IS " + no;
-
-        } else {
-            g.drawString(finishTime,WIDTH/2,HEIGHT/2);
-            g.drawImage(images[2],0,0,null);
         }
+            //finishTime ="GAME FINISH!! YOUR TIME IS " + no;
 
         //マウスのdrow
         if (isNomal) {
@@ -220,14 +246,12 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
         }else {
             g.drawImage(images[1],x - 8,y - 8,null);
         }
-
     }
 
     public void loadImage(String[] filenames) {
 
         images = new Image[filenames.length];
 
-        //なんとか頑張ってみる・・・
         //getClass　＝　クラスをとる　　getRsource　＝　ソースファイルの位置はどこか
         for (int i = 0; i < filenames.length; i++) {
             ImageIcon iccon = new ImageIcon(getClass().getResource("image/" + filenames[i]));
