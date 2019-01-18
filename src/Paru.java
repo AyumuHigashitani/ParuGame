@@ -8,7 +8,7 @@ public class Paru {
     private int y;
 
     //spriteシートの番号保存系
-    private int count;
+    static int count;
     private int maxCount;
 
     //それぞれのファイル名
@@ -98,7 +98,7 @@ public class Paru {
         this.dir = dir;
     }
 
-    public int getCount(){
+    public static int getCount(){
         return count;
     }
 

@@ -164,7 +164,7 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
         while (true) {
             if (canStart) {
                 no += 1;
-                if (num < 5) { //何回的を壊せば終了するか
+                if (num < 15) { //何回的を壊せば終了するか
                     //ココは纏められそう。。。
                     if (times1 + 200 == no) { //的1つ目，手動で壊せなかった場合ココ
                         times1 = no;

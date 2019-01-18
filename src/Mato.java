@@ -3,7 +3,7 @@ import javax.swing.ImageIcon;
 
 public class Mato {
 
-    private int x,y,hanbun;
+    private int x,y,hanbun;//hanbu　＝　的の半径
     private Image image;
     private Rectangle rectangle;
 
