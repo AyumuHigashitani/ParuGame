@@ -1,29 +1,26 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class ScorePanel extends JPanel implements Runnable{
-
-    private Thread thread;
+public class ScorePanel extends Panel {
 
     //終わったかどうかのフラグ
     private boolean isFinish;
 
-    //イメージの保存
-    private Image[] images;
-
+    //読み込みファイル名
     private String[]  filenames = {"paru_end1.jpg"};
 
-    //不透明度
-    float F;
-
     public ScorePanel(){
+
+        //パネルの大きさなどを設定
+        setOpaque(false) ;
+        setPreferredSize(new Dimension(getWIDTH(), getHEIGHT()));
+        InVisible();
+
         //初期値設定
         this.F = 0.0f;
 
+        //イメージのロード
         loadImage(filenames);
-        setOpaque(false) ;
-        setPreferredSize(new Dimension(1200, 600));
-        InVisible();
 
         //ゲーム用のスレッド
         thread = new Thread(this);
@@ -44,12 +41,12 @@ public class ScorePanel extends JPanel implements Runnable{
 
             try {
                 if (F == 0.0f) {
-                    Thread.sleep(2500);
+                    Thread.sleep(2000);
                 }else {
                     Thread.sleep(100);
                 }
             }catch (Exception e){
-
+                e.printStackTrace();
             }
         }
     }
@@ -66,18 +63,6 @@ public class ScorePanel extends JPanel implements Runnable{
         g2.setComposite(composite);
 
         g.drawImage(images[0],100,50,null);
-    }
-
-    public void loadImage(String[] filenames) {
-
-        images = new Image[filenames.length];
-
-        //なんとか頑張ってみる・・・
-        //getClass　＝　クラスをとる　　getRsource　＝　ソースファイルの位置はどこか
-        for (int i = 0; i < filenames.length; i++) {
-            ImageIcon iccon = new ImageIcon(getClass().getResource("image/" + filenames[i]));
-            images[i] = iccon.getImage();
-        }
     }
 
     public void InVisible(){

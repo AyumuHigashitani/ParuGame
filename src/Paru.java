@@ -35,7 +35,7 @@ public class Paru {
     //一つ前の状態は？
     private int beforeDir;
 
-    //試作
+    //threadの保存
     AnimationThread thread;
 
     public Paru(int x, int y){
@@ -91,7 +91,10 @@ public class Paru {
      */
     public void stop(){
             //割り込み判定で強制的にThread.sleepを終了させる
+        if (dir == NORMAL) { //ノーマル状態からの時だけアタック状態に入れるように
             thread.interrupt();
+            setCount(0);
+        }
     }
 
     public void setDir(int dir){

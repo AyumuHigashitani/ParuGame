@@ -4,20 +4,10 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import javax.swing.*;
 
-public class MainPanel extends JPanel implements Runnable, MouseMotionListener, MouseListener {
-
-    // パネルサイズ
-    private static final int WIDTH = 1200;
-    private static final int HEIGHT = 600;
+public class MainPanel extends Panel implements MouseMotionListener, MouseListener {
 
     //読み込みたいファイル名
-    private String[] filenames = {"pointaNomal.gif", "pointa.gif","paru_end1.jpg","haikei.jpg"};
-
-    //ゲーム用スレッド
-    private Thread gameLoop;
-
-    //イメージの保存
-    private Image[] images;
+    private String[] filenames = {"pointaNomal.gif", "pointa.gif", "paru_end1.jpg", "haikei.jpg"};
 
     //ゲームが終わったかどうかの変数
     private boolean isFinish;
@@ -52,10 +42,7 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
     //scorepanel
     ScorePanel scorePanel;
 
-    //不透明度
-    private float F;
-
-    //Threadのsleep
+    //Threadのsleep秒
     private int sleepTime;
 
     //スタートできるかどうか？
@@ -63,10 +50,9 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
 
     public MainPanel() {
         scorePanel = new ScorePanel();
-        // パネルの推奨サイズを設定、pack()するときに必要
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
-        loadImage(filenames);
+        // パネルの推奨サイズを設定、pack()するときに必要
+        setPreferredSize(new Dimension(getWIDTH(), getHEIGHT()));
 
         //初期値設定
         this.isFinish = false;
@@ -74,12 +60,15 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
         this.F = 0.0f;
         this.sleepTime = 10;
 
+        //イメージのロード
+        loadImage(filenames);
+
         //的の移動までの時間初期値
         times1 = 200;
         times2 = 200;
 
         //パルさん読み込み+位置指定
-        paru = new Paru(10,350);
+        paru = new Paru(10, 350);
 
         //的の初期
         mato = new Mato();
@@ -90,8 +79,8 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
         addMouseListener(this);
 
         //ゲーム用のスレッド
-        gameLoop = new Thread(this);
-        gameLoop.start();
+        thread = new Thread(this);
+        thread.start();
     }
 
     //マウスのカーソルを動かしたとき
@@ -118,7 +107,6 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
         canStart = true;
         xPressed = e.getX(); // マウスのX座標
         yPressed = e.getY(); // ラケットを移動
-        paru.setCount(0);
         paru.setDir(paru.ATTACK);
         paru.stop();
         repaint();
@@ -135,7 +123,7 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
 
     @Override
     //マウスが離れたとき
-    public void mouseReleased(MouseEvent e){
+    public void mouseReleased(MouseEvent e) {
         x = e.getX();
         y = e.getY();
         repaint();
@@ -156,7 +144,7 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
     /*
     終了した場合の処理
      */
-    public void finish(){
+    public void finish() {
         scorePanel.Visible();
     }
 
@@ -191,7 +179,7 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
                     sleepTime = 200;//フェードアウト時のみ描画を遅くするため
                     if (F < 0.6f) {
                         F += 0.05;
-                    }else {
+                    } else {
                         finish();
                     }
                 }
@@ -207,11 +195,12 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
 
     /**
      * gameLoop.start　→　run, repaint()　→　paintComponent　とくっついているので，ここで書けば，runの休止期間毎に呼び出される
+     *
      * @param g
      */
     public void paintComponent(Graphics g) {
         super.paintComponent(g); //いる？？
-        g.drawImage(images[3],0,0,null); //背景
+        g.drawImage(images[3], 0, 0, null); //背景
         paru.drow(g);//パルさん描画
 
         if (canStart) {
@@ -234,28 +223,17 @@ public class MainPanel extends JPanel implements Runnable, MouseMotionListener, 
                 // アルファ値をセット（以後の描画は半透明になる）
                 g2.setComposite(composite);
                 g.setColor(Color.gray);
-                g.fillRect(0, 0, WIDTH, HEIGHT);
+                g.fillRect(0, 0, getWIDTH(), getHEIGHT());
 
             }
         }
-            //finishTime ="GAME FINISH!! YOUR TIME IS " + no;
+        //finishTime ="GAME FINISH!! YOUR TIME IS " + no;
 
         //マウスのdrow
         if (isNomal) {
             g.drawImage(images[0], x - 8, y - 8, null);
-        }else {
-            g.drawImage(images[1],x - 8,y - 8,null);
-        }
-    }
-
-    public void loadImage(String[] filenames) {
-
-        images = new Image[filenames.length];
-
-        //getClass　＝　クラスをとる　　getRsource　＝　ソースファイルの位置はどこか
-        for (int i = 0; i < filenames.length; i++) {
-            ImageIcon iccon = new ImageIcon(getClass().getResource("image/" + filenames[i]));
-            images[i] = iccon.getImage();
+        } else {
+            g.drawImage(images[1], x - 8, y - 8, null);
         }
     }
 }
