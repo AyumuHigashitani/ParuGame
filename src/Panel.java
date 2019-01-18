@@ -1,5 +1,6 @@
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.ImageIcon;
+import java.awt.Image;
 
 public abstract class Panel  extends JPanel implements Runnable{
 

@@ -1,13 +1,17 @@
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import javax.swing.*;
 
 public class MainPanel extends Panel implements MouseMotionListener, MouseListener {
 
     //読み込みたいファイル名
-    private String[] filenames = {"pointaNomal.gif", "pointa.gif", "paru_end1.jpg", "haikei.jpg"};
+    private String[] filenames = {"pointaNomal.gif", "pointa.gif", "haikei.jpg"};
 
     //ゲームが終わったかどうかの変数
     private boolean isFinish;
@@ -25,12 +29,14 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
 
     //タイム計測
     private int no;
-    private String finishTime;
 
-    //時間によって行われる項目のための変数
-    private int num;
-    private int times1;
-    private int times2;
+    //scoreは何点か
+    static int score;
+
+    //的関係の時間変数
+    private int num; //的を何回壊したか
+    private int times1; //的1が消えるまでの時間
+    private int times2; //的2が消えるまでの時間
 
     //的1，的2
     private Mato mato;
@@ -40,7 +46,7 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     private Paru paru;
 
     //scorepanel
-    ScorePanel scorePanel;
+    static ScorePanel scorePanel;
 
     //Threadのsleep秒
     private int sleepTime;
@@ -48,8 +54,13 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     //スタートできるかどうか？
     private boolean canStart;
 
+    //Fontについて
+    private Font font;
+
     public MainPanel() {
         scorePanel = new ScorePanel();
+
+        font = new Font("SansSerif",Font.BOLD,22);
 
         // パネルの推奨サイズを設定、pack()するときに必要
         setPreferredSize(new Dimension(getWIDTH(), getHEIGHT()));
@@ -59,6 +70,7 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
         this.canStart = false;
         this.F = 0.0f;
         this.sleepTime = 10;
+        score = 0;
 
         //イメージのロード
         loadImage(filenames);
@@ -152,29 +164,34 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
         while (true) {
             if (canStart) {
                 no += 1;
-                if (num < 2) { //何回的を壊せば終了するか
-                    if (times1 + 300 - num * 10 == no) { //的1つ目
+                if (num < 5) { //何回的を壊せば終了するか
+                    //ココは纏められそう。。。
+                    if (times1 + 200 == no) { //的1つ目，手動で壊せなかった場合ココ
                         times1 = no;
                         num++;
                         mato = new Mato();
-                    } else if (mato.close(xPressed, yPressed)) {
+                    } else if (mato.close(xPressed, yPressed)) { //手動で壊した場合はココ
                         mato = new Mato();
+                        score ++;
                         times1 = no;
                         num++;
                     }
-                    if (num > 5) { //的2つ目は5個以上壊したら出現
-                        if (times2 + 300 - num * 10 == no) {
+                    if (num > 5) { //的2つ目は5個以上壊れたら出現
+                        if (times2 + 200 == no) {
                             times2 = no;
                             mato2 = new Mato();
                             num++;
                         } else if (mato2.close(xPressed, yPressed)) {
                             mato2 = new Mato();
+                            score ++;
                             times2 = no;
                             num++;
                         }
                     }
-                    //finishTime ="GAME FINISH!! YOUR TIME IS " + no;
                 } else {
+                    if (!isFinish){ //一度のみ最終scoreを決定する
+                        score = Math.round(score * 1000000 / no); //計算式は適当なので，後々適切なものにする
+                    }
                     isFinish = true;
                     sleepTime = 200;//フェードアウト時のみ描画を遅くするため
                     if (F < 0.6f) {
@@ -186,7 +203,6 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
                 try {
                     Thread.sleep(sleepTime);
                 } catch (Exception e) {
-
                 }
             }
             repaint();
@@ -194,42 +210,41 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     }
 
     /**
-     * gameLoop.start　→　run, repaint()　→　paintComponent　とくっついているので，ここで書けば，runの休止期間毎に呼び出される
+     * gameLoop.start　→　run, repaint()　→　paintComponent　とくっついているので，ここで書けば，runで呼び出される
      *
      * @param g
      */
     public void paintComponent(Graphics g) {
+
         super.paintComponent(g); //いる？？
-        g.drawImage(images[3], 0, 0, null); //背景
+
+        g.drawImage(images[2], 0, 0, null); //背景
         paru.drow(g);//パルさん描画
 
         if (canStart) {
-            //時間
-            //String Time = "time" + no;
-            //g.drawString(Time,400,50);
-
             if (!isFinish) {
                 mato.drow(g);
                 if (num > 5) {
                     mato2.drow(g);
                 }
-            } else {
+            } else { //ゲームが終了したら，灰色の半透明で塗りつぶす
+
                 Graphics2D g2 = (Graphics2D) g;
 
                 // アルファ値
-                AlphaComposite composite = AlphaComposite.getInstance(
-                        AlphaComposite.SRC_OVER, F);
+                AlphaComposite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, F);
 
-                // アルファ値をセット（以後の描画は半透明になる）
-                g2.setComposite(composite);
+                g2.setComposite(composite);// アルファ値をセット（以後の描画は半透明になる
                 g.setColor(Color.gray);
                 g.fillRect(0, 0, getWIDTH(), getHEIGHT());
-
             }
-        }
-        //finishTime ="GAME FINISH!! YOUR TIME IS " + no;
 
-        //マウスのdrow
+        }else { //スタート画面を作れなかったので，仮仕様。。。
+            g.setFont(font);
+            g.drawString("Please Click and Start",getWIDTH()/2,getHEIGHT()/2);
+        }
+
+        //ポインタの描画
         if (isNomal) {
             g.drawImage(images[0], x - 8, y - 8, null);
         } else {

@@ -1,5 +1,5 @@
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.Container;
 
 
     public class ParuGame extends JFrame {

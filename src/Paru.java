@@ -1,7 +1,6 @@
-import javafx.animation.Animation;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Graphics;
+import javax.swing.ImageIcon;
+import java.awt.Image;
 
 public class Paru {
     //位置
@@ -9,7 +8,7 @@ public class Paru {
     private int y;
 
     //spriteシートの番号保存系
-    static int count;
+    private int count;
     private int maxCount;
 
     //それぞれのファイル名
@@ -91,17 +90,15 @@ public class Paru {
      */
     public void stop(){
             //割り込み判定で強制的にThread.sleepを終了させる
-        if (dir == NORMAL) { //ノーマル状態からの時だけアタック状態に入れるように
             thread.interrupt();
             setCount(0);
-        }
     }
 
     public void setDir(int dir){
         this.dir = dir;
     }
 
-    public static int getCount(){
+    public int getCount(){
         return count;
     }
 
