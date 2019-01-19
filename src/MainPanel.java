@@ -8,6 +8,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
+import javafx.scene.media.AudioClip;
+
 public class MainPanel extends Panel implements MouseMotionListener, MouseListener {
 
     //読み込みたいファイル名
@@ -57,7 +59,14 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     //Fontについて
     private Font font;
 
+    //音楽再生
+    private String soundFilename = "sunadokeiseiun.mp3";
+
+    /*
+    コンストラクタ
+     */
     public MainPanel() {
+
         scorePanel = new ScorePanel();
 
         font = new Font("SansSerif",Font.BOLD,22);
@@ -72,8 +81,13 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
         this.sleepTime = 10;
         score = 0;
 
-        //イメージのロード
+        //ロード関係
         loadImage(filenames);
+
+        AudioClip bgm = new AudioClip(getClass().getResource("wav/" + soundFilename).toString());
+        //無限ループ
+        bgm.setCycleCount(AudioClip.INDEFINITE);
+        bgm.play();
 
         //的の移動までの時間初期値
         times1 = 200;
@@ -95,7 +109,9 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
         thread.start();
     }
 
-    //マウスのカーソルを動かしたとき
+    /*
+    マウスのカーソルを動かしたとき
+     */
     public void mouseMoved(MouseEvent e) {
         x = e.getX();
         y = e.getY();
@@ -104,7 +120,9 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
         isNomal = true;
     }
 
-    //マウスをドラッグしたまま移動させたとき
+    /*
+    マウスをドラッグしたまま移動させたとき
+     */
     public void mouseDragged(MouseEvent e) {
         x = e.getX();
         y = e.getY();
@@ -114,7 +132,9 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     }
 
     @Override
-    //マウスが押されたとき
+    /*
+    マウスが押されたとき
+     */
     public void mousePressed(MouseEvent e) {
         canStart = true;
         xPressed = e.getX(); // マウスのX座標
@@ -125,7 +145,9 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     }
 
     @Override
-    //マウスがクリックされたとき
+    /*
+    マウスがクリックされたとき
+     */
     public void mouseClicked(MouseEvent e) {
         x = e.getX();
         y = e.getY();
@@ -134,7 +156,9 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     }
 
     @Override
-    //マウスが離れたとき
+    /*
+    マウスが離れたとき
+     */
     public void mouseReleased(MouseEvent e) {
         x = e.getX();
         y = e.getY();
@@ -142,16 +166,21 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     }
 
     @Override
-    //マウスがアプレット上に乗った
+    /*
+    マウスがアプレット上に乗った
+     */
     public void mouseEntered(MouseEvent e) {
 
     }
 
     @Override
-    //マウスがアプレット上から離れたとき
+    /*
+    マウスがアプレット上から離れたとき
+     */
     public void mouseExited(MouseEvent e) {
 
     }
+
 
     /*
     終了した場合の処理
@@ -160,17 +189,21 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
         scorePanel.Visible();
     }
 
+    /*
+    ゲームとして動く部分
+     */
     public void run() {
         while (true) {
             if (canStart) {
                 no += 1;
-                if (num < 15) { //何回的を壊せば終了するか
+                if (num < 5) { //何回的を壊せば終了するか
                     //ココは纏められそう。。。
                     if (times1 + 200 == no) { //的1つ目，手動で壊せなかった場合ココ
                         times1 = no;
                         num++;
                         mato = new Mato();
-                    } else if (mato.close(xPressed, yPressed)) { //手動で壊した場合はココ
+                    } else if (mato.cross(paru.getCount(),xPressed, yPressed)) { //手動で壊した場合はココ
+                        mato.soundPlay();
                         mato = new Mato();
                         score ++;
                         times1 = no;
@@ -181,7 +214,8 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
                             times2 = no;
                             mato2 = new Mato();
                             num++;
-                        } else if (mato2.close(xPressed, yPressed)) {
+                        } else if (mato2.cross(paru.getCount(),xPressed, yPressed)) {
+                            mato2.soundPlay();
                             mato2 = new Mato();
                             score ++;
                             times2 = no;
@@ -189,11 +223,11 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
                         }
                     }
                 } else {
-                    if (!isFinish){ //一度のみ最終scoreを決定する
+                    if (!isFinish){ //一度のみ最終scoreを計算する
                         score = Math.round(score * 1000000 / no); //計算式は適当なので，後々適切なものにする
                     }
                     isFinish = true;
-                    sleepTime = 200;//フェードアウト時のみ描画を遅くするため
+                    sleepTime = 200;//フェードアウト時のみ描画を遅くしたいため
                     if (F < 0.6f) {
                         F += 0.05;
                     } else {
@@ -203,6 +237,7 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
                 try {
                     Thread.sleep(sleepTime);
                 } catch (Exception e) {
+
                 }
             }
             repaint();
@@ -211,8 +246,7 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
 
     /**
      * gameLoop.start　→　run, repaint()　→　paintComponent　とくっついているので，ここで書けば，runで呼び出される
-     *
-     * @param g
+     * @param g　グラフィック
      */
     public void paintComponent(Graphics g) {
 
@@ -239,7 +273,7 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
                 g.fillRect(0, 0, getWIDTH(), getHEIGHT());
             }
 
-        }else { //スタート画面を作れなかったので，仮仕様。。。
+        }else { //スタート画面を上手く作れていないので，仮仕様。。。
             g.setFont(font);
             g.drawString("Please Click and Start",getWIDTH()/2,getHEIGHT()/2);
         }

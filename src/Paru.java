@@ -8,7 +8,7 @@ public class Paru {
     private int y;
 
     //spriteシートの番号保存系
-    static int count;
+    private int count; //staticなのは，MainPanelで
     private int maxCount;
 
     //それぞれのファイル名
@@ -17,7 +17,7 @@ public class Paru {
     //モーションの枚数（何コマで書かれているか）
     private int[] NO = {1,3,0};
 
-    //大きさ
+    //キャラの大きさ
     private final int width = 230*2;
     private final int height = 120*2;
 
@@ -37,7 +37,16 @@ public class Paru {
     //threadの保存
     AnimationThread thread;
 
+    //sound系
+    private WaveEngine wav;
+    private String[] soundFilenames = {"ban.wav", "cartridge.wav"};
+
+    /*
+    コンストラクタ
+     */
     public Paru(int x, int y){
+
+        wav = new WaveEngine();
 
         //初期値設定
         this.x = x;
@@ -46,13 +55,19 @@ public class Paru {
         this.count = 0;
         this.maxCount = NO[0];
 
+        wav.load(soundFilenames[0],"wav/" + soundFilenames[0]);
+        wav.load(soundFilenames[1],"wav/" + soundFilenames[1]);
         loadImage(filenames);
+
 
         //アニメーション用スレッド開始
         thread = new AnimationThread();
         thread.start();
     }
 
+    /*
+    描画メソッド
+    */
     public void drow(Graphics g){
 
         if (dir != beforeDir){
@@ -66,16 +81,19 @@ public class Paru {
                 x + width,y + height, //描き終わり座標
                 count * width,0, //spriteシートのどこを取ってくるか
                 count * width + width, height,null); //spriteシートの終わりはどこ
-        if (count == 3){
+
+        if (count == 3){ //カウント3の時にエフェクト追加　ここに音を入れるのは良くないはず。。。︎後日改良
+            wav.play(soundFilenames[0]);
+            wav.play(soundFilenames[1]);
             g.drawImage(images[2],280,480,100,100,null);
         }
     }
 
-
+    /*
+    イメージのロード
+    */
     public void loadImage(String[] filenames){
 
-        //なんとか頑張ってみる・・・
-        //getClass　＝　クラスをとる　　getRsource　＝　ソースファイルの位置はどこか
         images = new Image[filenames.length];
 
         for (int i= 0; i < filenames.length;i++) {
@@ -98,7 +116,7 @@ public class Paru {
         this.dir = dir;
     }
 
-    public static int getCount(){
+    public int getCount(){
         return count;
     }
 

@@ -70,7 +70,7 @@ public class ScorePanel extends Panel {
         int num = 0;
         for (int i : intScore){
             num++;
-            g.drawImage(images[i],850 + num * 40,200,null);
+            g.drawImage(images[i],850 + num * 40,180,null);
         }
     }
 
