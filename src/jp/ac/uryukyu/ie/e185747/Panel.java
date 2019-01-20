@@ -22,17 +22,23 @@ public abstract class Panel  extends JPanel implements Runnable{
     //不透明度
     protected float F;
 
+    /*
+    Runnableを使う場合は，run()の中身を必ず書かなければいけない
+     */
     @Override
     public abstract void run();
 
+    /*
+    イメージのロード用メソッド
+     */
     public void loadImage(String[] filenames) {
 
         images = new Image[filenames.length];
 
-        //なんとか頑張ってみる・・・
+        //なんとか頑張ってみたかったが，ほぼコピペ。。。
         //getClass　＝　クラスをとる　　getRsource　＝　ソースファイルの位置はどこか
         for (int i = 0; i < filenames.length; i++) {
-            System.out.println(getClass().getResource("image/" + filenames[i]));
+
             ImageIcon icon = new ImageIcon(getClass().getResource("image/" + filenames[i]));
             images[i] = icon.getImage();
         }

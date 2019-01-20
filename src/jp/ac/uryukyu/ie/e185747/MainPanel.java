@@ -1,5 +1,6 @@
 package jp.ac.uryukyu.ie.e185747;
 
+import javax.sound.sampled.LineEvent;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Dimension;
@@ -10,15 +11,18 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
-import javafx.scene.media.AudioClip;
+//import javafx.scene.media.AudioClip;　Gradleでは使用不可のため
 
 public class MainPanel extends Panel implements MouseMotionListener, MouseListener {
 
     //読み込みたいファイル名
-    private String[] filenames = {"pointaNomal.gif", "pointa.gif", "haikei.jpg"};
+    private String[] filenames = {"pointaNomal.gif", "pointa.gif", "haikei.jpg", "icon.png"};
 
     //ゲームが終わったかどうかの変数
     private boolean isFinish;
+
+    //的を何回壊したら終了するか　何処でも変更なしなので，final修飾子
+    private final int endCount = 15;
 
     //ポインターの押した座標
     private int xPressed;
@@ -39,12 +43,10 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
 
     //的関係の時間変数
     private int num; //的を何回壊したか
-    private int times1; //的1が消えるまでの時間
-    private int times2; //的2が消えるまでの時間
+    private int times1, times2; //的1が消えるまでの時間と的2が消えるまでの時間
 
     //的1，的2
-    private Mato mato;
-    private Mato mato2;
+    private Mato mato, mato2;
 
     //パルさん
     private Paru paru;
@@ -61,8 +63,9 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     //Fontについて
     private Font font;
 
-    //音楽再生
-    private String soundFilename = "sunadokeiseiun.mp3";
+    //sound系
+    private WaveEngine wav;
+    private String soundFilename = "sunadokeiseiun.wav";
 
     /*
     コンストラクタ
@@ -70,8 +73,12 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     public MainPanel() {
 
         scorePanel = new ScorePanel();
+        //javafxが使えないので，急遽wavファイルで。。。 1曲再生中にゲームが終わるので，ループ処理はさせていない
+        wav = new WaveEngine();
+        wav.load(soundFilename, "wav/" + soundFilename);
+        wav.play(soundFilename);
 
-        font = new Font("SansSerif",Font.BOLD,22);
+        font = new Font("SansSerif", Font.BOLD, 22);
 
         // パネルの推奨サイズを設定、pack()するときに必要
         setPreferredSize(new Dimension(getWIDTH(), getHEIGHT()));
@@ -86,16 +93,17 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
         //ロード関係
         loadImage(filenames);
 
-        AudioClip bgm = new AudioClip(getClass().getResource("wav/" + soundFilename).toString());
+        //mp3の音源を無限ループさせる予定だったが，Gradleでjavafxが使用できなかったのでコメントアウト中。。。
+        //AudioClip bgm = new AudioClip(getClass().getResource("wav/" + soundFilename).toString());
         //無限ループ
-        bgm.setCycleCount(AudioClip.INDEFINITE);
-        bgm.play();
+        //bgm.setCycleCount(AudioClip.INDEFINITE);
+        //bgm.play();
 
         //的の移動までの時間初期値
         times1 = 200;
         times2 = 200;
 
-        //パルさん読み込み+位置指定
+        //パルさん読み込み+表示位置指定
         paru = new Paru(10, 350);
 
         //的の初期
@@ -115,8 +123,8 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
     マウスのカーソルを動かしたとき
      */
     public void mouseMoved(MouseEvent e) {
-        x = e.getX();
-        y = e.getY();
+        x = e.getX(); // マウスのX座標
+        y = e.getY(); // マウスのY座標
 
         repaint();
         isNomal = true;
@@ -139,8 +147,8 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
      */
     public void mousePressed(MouseEvent e) {
         canStart = true;
-        xPressed = e.getX(); // マウスのX座標
-        yPressed = e.getY(); // ラケットを移動
+        xPressed = e.getX();
+        yPressed = e.getY();
         paru.setDir(paru.ATTACK);
         paru.stop();
         repaint();
@@ -183,7 +191,6 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
 
     }
 
-
     /*
     終了した場合の処理
      */
@@ -196,18 +203,18 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
      */
     public void run() {
         while (true) {
-            if (canStart) {
+            if (canStart) { //本来はスタート画面からcanStartをtrueにするつもりだった
                 no += 1;
-                if (num < 5) { //何回的を壊せば終了するか
+                if (num < endCount) { //何回的を壊せば終了するか
                     //ココは纏められそう。。。
                     if (times1 + 200 == no) { //的1つ目，手動で壊せなかった場合ココ
                         times1 = no;
                         num++;
                         mato = new Mato();
-                    } else if (mato.cross(paru.getCount(),xPressed, yPressed)) { //手動で壊した場合はココ
+                    } else if (mato.cross(paru.getCount(), xPressed, yPressed)) { //手動で壊した場合はココ
                         mato.soundPlay();
                         mato = new Mato();
-                        score ++;
+                        score++;
                         times1 = no;
                         num++;
                     }
@@ -216,17 +223,17 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
                             times2 = no;
                             mato2 = new Mato();
                             num++;
-                        } else if (mato2.cross(paru.getCount(),xPressed, yPressed)) {
+                        } else if (mato2.cross(paru.getCount(), xPressed, yPressed)) {
                             mato2.soundPlay();
                             mato2 = new Mato();
-                            score ++;
+                            score++;
                             times2 = no;
                             num++;
                         }
                     }
                 } else {
-                    if (!isFinish){ //一度のみ最終scoreを計算する
-                        score = Math.round(score * 1000000 / no); //計算式は適当なので，後々適切なものにする
+                    if (!isFinish) { //一度のみ最終scoreを計算する
+                        score = Math.round(score * 1000000 / no); //計算式は適当なので，後々適切なものにする。メソッド用意しても良いかも。。。
                     }
                     isFinish = true;
                     sleepTime = 200;//フェードアウト時のみ描画を遅くしたいため
@@ -239,7 +246,7 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
                 try {
                     Thread.sleep(sleepTime);
                 } catch (Exception e) {
-
+                    //特になし
                 }
             }
             repaint();
@@ -248,11 +255,12 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
 
     /**
      * gameLoop.start　→　run, repaint()　→　paintComponent　とくっついているので，ここで書けば，runで呼び出される
-     * @param g　グラフィック
+     *
+     * @param g 　グラフィック
      */
     public void paintComponent(Graphics g) {
 
-        super.paintComponent(g); //いる？？
+        super.paintComponent(g); //いる？？なくても変化なしだが，書いた方が良いらしい。。。
 
         g.drawImage(images[2], 0, 0, null); //背景
         paru.drow(g);//パルさん描画
@@ -267,17 +275,16 @@ public class MainPanel extends Panel implements MouseMotionListener, MouseListen
 
                 Graphics2D g2 = (Graphics2D) g;
 
-                // アルファ値
                 AlphaComposite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, F);
-
                 g2.setComposite(composite);// アルファ値をセット（以後の描画は半透明になる
                 g.setColor(Color.gray);
+
                 g.fillRect(0, 0, getWIDTH(), getHEIGHT());
             }
 
-        }else { //スタート画面を上手く作れていないので，仮仕様。。。
+        } else { //スタート画面を上手く作れていないので，仮仕様。。。
             g.setFont(font);
-            g.drawString("Please Click and Start",getWIDTH()/2,getHEIGHT()/2);
+            g.drawString("Please Click and Start", getWIDTH() / 2, getHEIGHT() / 2);
         }
 
         //ポインタの描画
